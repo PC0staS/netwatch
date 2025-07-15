@@ -1,8 +1,11 @@
+"""
+Network Monitor Core Module
+"""
+
 import psutil
 import time
 from collections import deque
 from datetime import datetime
-import os
 
 # ANSI Color codes for terminal colors
 class Colors:
@@ -48,64 +51,6 @@ class NetworkMonitor:
         """Get all available network interfaces"""
         net_io = psutil.net_io_counters(pernic=True)
         return list(net_io.keys())
-        
-    def select_interfaces(self):
-        """Allow user to select which interfaces to monitor"""
-        available_interfaces = self.get_available_interfaces()
-        
-        print(f"\n{Colors.BOLD}{Colors.CYAN}{'═' * 70}{Colors.RESET}")
-        print(f"{Colors.BOLD}{Colors.WHITE}🌐 AVAILABLE NETWORK INTERFACES{Colors.RESET}")
-        print(f"{Colors.BOLD}{Colors.CYAN}{'═' * 70}{Colors.RESET}")
-        
-        for i, interface in enumerate(available_interfaces, 1):
-            print(f"{Colors.BOLD}{Colors.YELLOW}{i}.{Colors.RESET} {Colors.CYAN}{interface}{Colors.RESET}")
-        
-        print(f"\n{Colors.BOLD}{Colors.CYAN}{'═' * 70}{Colors.RESET}")
-        print(f"{Colors.BOLD}{Colors.WHITE}🎯 SELECTION OPTIONS:{Colors.RESET}")
-        print(f"{Colors.BOLD}{Colors.GREEN}0{Colors.RESET} - Monitor {Colors.BOLD}{Colors.YELLOW}ALL{Colors.RESET} interfaces")
-        print(f"{Colors.BOLD}{Colors.GREEN}1,2,3{Colors.RESET} - Monitor {Colors.BOLD}{Colors.YELLOW}specific{Colors.RESET} interfaces (comma-separated)")
-        print(f"{Colors.BOLD}{Colors.BLUE}Example:{Colors.RESET} {Colors.YELLOW}'1,3'{Colors.RESET} to monitor interfaces 1 and 3")
-        print(f"{Colors.BOLD}{Colors.CYAN}{'═' * 70}{Colors.RESET}")
-        
-        while True:
-            try:
-                choice = input(f"\n{Colors.BOLD}{Colors.MAGENTA}🔍 Enter your selection: {Colors.RESET}").strip()
-                
-                if choice == "0":
-                    self.selected_interfaces = available_interfaces
-                    print(f"\n{Colors.BOLD}{Colors.GREEN}✅ Selected ALL interfaces ({len(available_interfaces)} total){Colors.RESET}")
-                    break
-                elif choice:
-                    # Parse comma-separated values
-                    indices = [int(x.strip()) for x in choice.split(",")]
-                    selected = []
-                    
-                    for idx in indices:
-                        if 1 <= idx <= len(available_interfaces):
-                            selected.append(available_interfaces[idx - 1])
-                        else:
-                            print(f"{Colors.BOLD}{Colors.RED}❌ Invalid interface number: {idx}{Colors.RESET}")
-                            continue
-                    
-                    if selected:
-                        self.selected_interfaces = selected
-                        print(f"\n{Colors.BOLD}{Colors.GREEN}✅ Selected interfaces:{Colors.RESET}")
-                        for interface in selected:
-                            print(f"   {Colors.BOLD}{Colors.CYAN}- {interface}{Colors.RESET}")
-                        break
-                    else:
-                        print(f"{Colors.BOLD}{Colors.RED}❌ No valid interfaces selected. Please try again.{Colors.RESET}")
-                else:
-                    print(f"{Colors.BOLD}{Colors.RED}❌ Please enter a valid selection.{Colors.RESET}")
-                    
-            except ValueError:
-                print(f"{Colors.BOLD}{Colors.RED}❌ Invalid input. Please enter numbers separated by commas.{Colors.RESET}")
-            except KeyboardInterrupt:
-                print(f"\n\n{Colors.BOLD}{Colors.RED}Program cancelled by user.{Colors.RESET}")
-                self.running = False
-                return False
-                
-        return True
         
     def get_interface_data(self, interface):
         """Get or create interface data structure"""
@@ -237,8 +182,69 @@ class NetworkMonitor:
         
         return graph
     
+    def select_interfaces(self):
+        """Allow user to select which interfaces to monitor"""
+        available_interfaces = self.get_available_interfaces()
+        
+        print(f"\n{Colors.BOLD}{Colors.CYAN}{'═' * 70}{Colors.RESET}")
+        print(f"{Colors.BOLD}{Colors.WHITE}🌐 AVAILABLE NETWORK INTERFACES{Colors.RESET}")
+        print(f"{Colors.BOLD}{Colors.CYAN}{'═' * 70}{Colors.RESET}")
+        
+        for i, interface in enumerate(available_interfaces, 1):
+            print(f"{Colors.BOLD}{Colors.YELLOW}{i}.{Colors.RESET} {Colors.CYAN}{interface}{Colors.RESET}")
+        
+        print(f"\n{Colors.BOLD}{Colors.CYAN}{'═' * 70}{Colors.RESET}")
+        print(f"{Colors.BOLD}{Colors.WHITE}🎯 SELECTION OPTIONS:{Colors.RESET}")
+        print(f"{Colors.BOLD}{Colors.GREEN}0{Colors.RESET} - Monitor {Colors.BOLD}{Colors.YELLOW}ALL{Colors.RESET} interfaces")
+        print(f"{Colors.BOLD}{Colors.GREEN}1,2,3{Colors.RESET} - Monitor {Colors.BOLD}{Colors.YELLOW}specific{Colors.RESET} interfaces (comma-separated)")
+        print(f"{Colors.BOLD}{Colors.BLUE}Example:{Colors.RESET} {Colors.YELLOW}'1,3'{Colors.RESET} to monitor interfaces 1 and 3")
+        print(f"{Colors.BOLD}{Colors.CYAN}{'═' * 70}{Colors.RESET}")
+        
+        while True:
+            try:
+                choice = input(f"\n{Colors.BOLD}{Colors.MAGENTA}🔍 Enter your selection: {Colors.RESET}").strip()
+                
+                if choice == "0":
+                    self.selected_interfaces = available_interfaces
+                    print(f"\n{Colors.BOLD}{Colors.GREEN}✅ Selected ALL interfaces ({len(available_interfaces)} total){Colors.RESET}")
+                    break
+                elif choice:
+                    # Parse comma-separated values
+                    indices = [int(x.strip()) for x in choice.split(",")]
+                    selected = []
+                    
+                    for idx in indices:
+                        if 1 <= idx <= len(available_interfaces):
+                            selected.append(available_interfaces[idx - 1])
+                        else:
+                            print(f"{Colors.BOLD}{Colors.RED}❌ Invalid interface number: {idx}{Colors.RESET}")
+                            continue
+                    
+                    if selected:
+                        self.selected_interfaces = selected
+                        print(f"\n{Colors.BOLD}{Colors.GREEN}✅ Selected interfaces:{Colors.RESET}")
+                        for interface in selected:
+                            print(f"   {Colors.BOLD}{Colors.CYAN}- {interface}{Colors.RESET}")
+                        break
+                    else:
+                        print(f"{Colors.BOLD}{Colors.RED}❌ No valid interfaces selected. Please try again.{Colors.RESET}")
+                else:
+                    print(f"{Colors.BOLD}{Colors.RED}❌ Please enter a valid selection.{Colors.RESET}")
+                    
+            except ValueError:
+                print(f"{Colors.BOLD}{Colors.RED}❌ Invalid input. Please enter numbers separated by commas.{Colors.RESET}")
+            except KeyboardInterrupt:
+                print(f"\n\n{Colors.BOLD}{Colors.RED}Program cancelled by user.{Colors.RESET}")
+                self.running = False
+                return False
+                
+        return True
+    
     def print_stats(self):
         """Print current network statistics for selected interfaces with beautiful ASCII graphs"""
+        import os
+        from datetime import datetime
+        
         # Clear terminal screen
         os.system('cls' if os.name == 'nt' else 'clear')
         
@@ -313,24 +319,3 @@ class NetworkMonitor:
         except KeyboardInterrupt:
             print(f"\n\n{Colors.BOLD}{Colors.RED}🛑 Network monitoring stopped by user.{Colors.RESET}")
             self.running = False
-
-def get_net_io():
-    """Legacy function for backward compatibility"""
-    net_io = psutil.net_io_counters()
-    return net_io.bytes_sent, net_io.bytes_recv
-
-def main():
-    """Main function"""
-    print(f"{Colors.BOLD}{Colors.CYAN}🌐 NetWatch - Network Monitor{Colors.RESET}")
-    print(f"{Colors.BOLD}{Colors.MAGENTA}{'═' * 50}{Colors.RESET}")
-    
-    try:
-        monitor = NetworkMonitor()
-        monitor.run_console_mode()
-    except KeyboardInterrupt:
-        print(f"\n\n{Colors.BOLD}{Colors.YELLOW}👋 Program terminated by user.{Colors.RESET}")
-    except Exception as e:
-        print(f"\n{Colors.BOLD}{Colors.RED}❌ Error: {e}{Colors.RESET}")
-
-if __name__ == "__main__":
-    main()
