@@ -1,11 +1,8 @@
 import psutil
 import time
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-import matplotlib.ticker as ticker
-from collections import defaultdict, deque
-import threading
+from collections import deque
 from datetime import datetime
+import os
 
 def bytesToHuman(num):
     """
@@ -24,6 +21,70 @@ class NetworkMonitor:
         self.interface_data = {}
         self.time_history = deque(maxlen=60)
         self.running = True
+        self.selected_interfaces = []
+        
+    def get_available_interfaces(self):
+        """Get all available network interfaces"""
+        net_io = psutil.net_io_counters(pernic=True)
+        return list(net_io.keys())
+        
+    def select_interfaces(self):
+        """Allow user to select which interfaces to monitor"""
+        available_interfaces = self.get_available_interfaces()
+        
+        print("\n" + "="*60)
+        print("AVAILABLE NETWORK INTERFACES")
+        print("="*60)
+        
+        for i, interface in enumerate(available_interfaces, 1):
+            print(f"{i}. {interface}")
+        
+        print("\n" + "="*60)
+        print("SELECTION OPTIONS:")
+        print("0 - Monitor ALL interfaces")
+        print("1,2,3 - Monitor specific interfaces (comma-separated)")
+        print("Example: '1,3' to monitor interfaces 1 and 3")
+        print("="*60)
+        
+        while True:
+            try:
+                choice = input("\nEnter your selection: ").strip()
+                
+                if choice == "0":
+                    self.selected_interfaces = available_interfaces
+                    print(f"\n✅ Selected ALL interfaces ({len(available_interfaces)} total)")
+                    break
+                elif choice:
+                    # Parse comma-separated values
+                    indices = [int(x.strip()) for x in choice.split(",")]
+                    selected = []
+                    
+                    for idx in indices:
+                        if 1 <= idx <= len(available_interfaces):
+                            selected.append(available_interfaces[idx - 1])
+                        else:
+                            print(f"❌ Invalid interface number: {idx}")
+                            continue
+                    
+                    if selected:
+                        self.selected_interfaces = selected
+                        print(f"\n✅ Selected interfaces:")
+                        for interface in selected:
+                            print(f"   - {interface}")
+                        break
+                    else:
+                        print("❌ No valid interfaces selected. Please try again.")
+                else:
+                    print("❌ Please enter a valid selection.")
+                    
+            except ValueError:
+                print("❌ Invalid input. Please enter numbers separated by commas.")
+            except KeyboardInterrupt:
+                print("\n\nProgram cancelled by user.")
+                self.running = False
+                return False
+                
+        return True
         
     def get_interface_data(self, interface):
         """Get or create interface data structure"""
@@ -44,43 +105,103 @@ class NetworkMonitor:
         return net_io
     
     def update_data(self):
-        """Update network data for all interfaces"""
+        """Update network data for selected interfaces only"""
         current_time = datetime.now()
         self.time_history.append(current_time)
         
         net_io = self.get_net_io_per_interface()
         
-        for interface, stats in net_io.items():
-            data = self.get_interface_data(interface)
-            
-            # Calculate rate (bytes per second)
-            if data['last_sent'] > 0:
-                sent_rate = stats.bytes_sent - data['last_sent']
-                recv_rate = stats.bytes_recv - data['last_recv']
-            else:
-                sent_rate = 0
-                recv_rate = 0
+        # Only process selected interfaces
+        for interface in self.selected_interfaces:
+            if interface in net_io:
+                stats = net_io[interface]
+                data = self.get_interface_data(interface)
                 
-            # Update histories
-            data['sent_history'].append(sent_rate)
-            data['recv_history'].append(recv_rate)
+                # Calculate rate (bytes per second)
+                if data['last_sent'] > 0:
+                    sent_rate = stats.bytes_sent - data['last_sent']
+                    recv_rate = stats.bytes_recv - data['last_recv']
+                else:
+                    sent_rate = 0
+                    recv_rate = 0
+                    
+                # Update histories
+                data['sent_history'].append(sent_rate)
+                data['recv_history'].append(recv_rate)
+                
+                # Update totals
+                data['sent_total'] = stats.bytes_sent
+                data['recv_total'] = stats.bytes_recv
+                
+                # Update last values
+                data['last_sent'] = stats.bytes_sent
+                data['last_recv'] = stats.bytes_recv
+    
+    def create_ascii_graph(self, data_history, width=50, height=8):
+        """Create a simple ASCII graph from data history"""
+        if len(data_history) < 2:
+            return ["No data yet..." + " " * (width - 14)]
+        
+        # Get the data points
+        data = list(data_history)
+        
+        # Find min and max for scaling
+        max_val = max(data) if data else 1
+        min_val = min(data) if data else 0
+        
+        # Avoid division by zero
+        if max_val == min_val:
+            max_val = min_val + 1
+        
+        # Create the graph
+        graph = []
+        
+        # Top border
+        graph.append("┌" + "─" * width + "┐")
+        
+        # Graph lines
+        for i in range(height):
+            line = "│"
+            threshold = min_val + (max_val - min_val) * (height - i - 1) / (height - 1)
             
-            # Update totals
-            data['sent_total'] = stats.bytes_sent
-            data['recv_total'] = stats.bytes_recv
+            for j in range(min(width, len(data))):
+                if data[j] >= threshold:
+                    line += "█"
+                else:
+                    line += " "
             
-            # Update last values
-            data['last_sent'] = stats.bytes_sent
-            data['last_recv'] = stats.bytes_recv
+            # Fill remaining space
+            line += " " * (width - min(width, len(data)))
+            line += "│"
+            graph.append(line)
+        
+        # Bottom border with scale
+        graph.append("└" + "─" * width + "┘")
+        
+        # Add scale info
+        if max_val > 0:
+            scale_info = f"Max: {bytesToHuman(max_val)}/s"
+        else:
+            scale_info = "No activity"
+        
+        graph.append(scale_info)
+        
+        return graph
     
     def print_stats(self):
-        """Print current network statistics"""
-        print("\n" + "="*80)
-        print(f"Network Monitor - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print("="*80)
+        """Print current network statistics for selected interfaces with ASCII graphs"""
+        # Clear terminal screen
+        os.system('cls' if os.name == 'nt' else 'clear')
         
-        for interface, data in self.interface_data.items():
-            if len(data['sent_history']) > 0:
+        print("=" * 80)
+        print(f"NetWatch - Network Monitor - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"Monitoring {len(self.selected_interfaces)} interface(s)")
+        print("=" * 80)
+        
+        # Only show selected interfaces
+        for interface in self.selected_interfaces:
+            if interface in self.interface_data and len(self.interface_data[interface]['sent_history']) > 0:
+                data = self.interface_data[interface]
                 current_sent = data['sent_history'][-1]
                 current_recv = data['recv_history'][-1]
                 
@@ -92,70 +213,36 @@ class NetworkMonitor:
                 print(f"     ⬆️  Total Sent: {bytesToHuman(data['sent_total'])}")
                 print(f"     ⬇️  Total Recv: {bytesToHuman(data['recv_total'])}")
                 
-                # Show mini graph (text-based)
-                if len(data['sent_history']) > 1:
-                    sent_trend = "📈" if current_sent > data['sent_history'][-2] else "📉" if current_sent < data['sent_history'][-2] else "➡️"
-                    recv_trend = "📈" if current_recv > data['recv_history'][-2] else "📉" if current_recv < data['recv_history'][-2] else "➡️"
-                    print(f"   Trend: ⬆️ {sent_trend} | ⬇️ {recv_trend}")
-    
-    def create_plots(self):
-        """Create matplotlib plots for network interfaces"""
-        active_interfaces = [iface for iface, data in self.interface_data.items() 
-                           if len(data['sent_history']) > 0 and (data['sent_history'][-1] > 0 or data['recv_history'][-1] > 0)]
+                # Show ASCII graphs if we have enough data
+                if len(data['sent_history']) >= 2:
+                    print(f"\n   📊 Sent Traffic (last {len(data['sent_history'])} seconds):")
+                    sent_graph = self.create_ascii_graph(data['sent_history'], width=60, height=6)
+                    for line in sent_graph:
+                        print(f"     {line}")
+                    
+                    print(f"\n   📊 Received Traffic (last {len(data['recv_history'])} seconds):")
+                    recv_graph = self.create_ascii_graph(data['recv_history'], width=60, height=6)
+                    for line in recv_graph:
+                        print(f"     {line}")
         
-        if not active_interfaces:
-            return
-            
-        # Create subplots
-        fig, axes = plt.subplots(len(active_interfaces), 2, figsize=(15, 4*len(active_interfaces)))
-        fig.suptitle('Network Interface Monitoring', fontsize=16)
-        
-        if len(active_interfaces) == 1:
-            axes = [axes]
-        
-        for i, interface in enumerate(active_interfaces):
-            data = self.interface_data[interface]
-            
-            # Prepare time data
-            time_points = list(range(len(data['sent_history'])))
-            sent_data = list(data['sent_history'])
-            recv_data = list(data['recv_history'])
-            
-            # Sent data plot
-            axes[i][0].clear()
-            axes[i][0].plot(time_points, sent_data, 'b-', linewidth=2, label='Sent')
-            axes[i][0].set_title(f'{interface} - Bytes Sent/sec')
-            axes[i][0].set_ylabel('Bytes/sec')
-            axes[i][0].grid(True, alpha=0.3)
-            axes[i][0].legend()
-            
-            # Format y-axis labels
-            if sent_data:
-                max_sent = max(sent_data) if sent_data else 0
-                if max_sent > 0:
-                    axes[i][0].yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, p: bytesToHuman(x)))
-            
-            # Received data plot
-            axes[i][1].clear()
-            axes[i][1].plot(time_points, recv_data, 'r-', linewidth=2, label='Received')
-            axes[i][1].set_title(f'{interface} - Bytes Received/sec')
-            axes[i][1].set_ylabel('Bytes/sec')
-            axes[i][1].grid(True, alpha=0.3)
-            axes[i][1].legend()
-            
-            # Format y-axis labels
-            if recv_data:
-                max_recv = max(recv_data) if recv_data else 0
-                if max_recv > 0:
-                    axes[i][1].yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, p: bytesToHuman(x)))
-        
-        plt.tight_layout()
-        plt.draw()
-        plt.pause(0.1)
+        print("\n" + "=" * 80)
+        print("Press Ctrl+C to stop monitoring")
+        print("=" * 80)
     
     def run_console_mode(self):
         """Run in console mode with text output"""
-        print("Starting network monitoring (Console Mode)... Press Ctrl+C to stop")
+        print("\n🚀 Starting network monitoring...")
+        print("📊 Gathering interface data...")
+        
+        # Let user select interfaces
+        if not self.select_interfaces():
+            return
+        
+        print(f"\n🔄 Monitoring started for {len(self.selected_interfaces)} interface(s)")
+        print("⏱️  Updates every second - Press Ctrl+C to stop")
+        
+        # Wait a moment before starting
+        time.sleep(2)
         
         try:
             while self.running:
@@ -163,35 +250,8 @@ class NetworkMonitor:
                 self.print_stats()
                 time.sleep(1)
         except KeyboardInterrupt:
-            print("\n\nNetwork monitoring stopped.")
+            print("\n\n🛑 Network monitoring stopped by user.")
             self.running = False
-    
-    def run_gui_mode(self):
-        """Run in GUI mode with matplotlib graphs"""
-        print("Starting network monitoring (GUI Mode)... Close the plot window to stop")
-        
-        plt.ion()  # Interactive mode
-        
-        def update_plot():
-            while self.running:
-                self.update_data()
-                self.create_plots()
-                time.sleep(1)
-        
-        # Start data collection in a separate thread
-        data_thread = threading.Thread(target=update_plot)
-        data_thread.daemon = True
-        data_thread.start()
-        
-        try:
-            # Keep the main thread alive
-            while self.running:
-                plt.pause(0.1)
-        except KeyboardInterrupt:
-            print("\nNetwork monitoring stopped.")
-            self.running = False
-        finally:
-            plt.ioff()
 
 def get_net_io():
     """Legacy function for backward compatibility"""
@@ -199,37 +259,17 @@ def get_net_io():
     return net_io.bytes_sent, net_io.bytes_recv
 
 def main():
-    """Main function with mode selection"""
-    import sys
-    
-    print("Network Monitor - Enhanced Edition")
-    print("Choose mode:")
-    print("1. Console Mode (text-based with emojis)")
-    print("2. GUI Mode (graphical plots)")
+    """Main function"""
+    print("🌐 NetWatch - Network Monitor")
+    print("=" * 50)
     
     try:
-        if len(sys.argv) > 1:
-            mode = sys.argv[1]
-        else:
-            mode = input("Enter mode (1 or 2): ").strip()
-        
-        monitor = NetworkMonitor()
-        
-        if mode == "1" or mode.lower() == "console":
-            monitor.run_console_mode()
-        elif mode == "2" or mode.lower() == "gui":
-            monitor.run_gui_mode()
-        else:
-            print("Invalid mode. Using console mode by default.")
-            monitor.run_console_mode()
-            
-    except KeyboardInterrupt:
-        print("\nProgram terminated by user.")
-    except Exception as e:
-        print(f"Error: {e}")
-        print("Falling back to console mode...")
         monitor = NetworkMonitor()
         monitor.run_console_mode()
+    except KeyboardInterrupt:
+        print("\n\n👋 Program terminated by user.")
+    except Exception as e:
+        print(f"\n❌ Error: {e}")
 
 if __name__ == "__main__":
     main()
