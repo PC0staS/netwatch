@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "netwatch-monitor"
-version = "1.0.0"
+version = "1.0.1"
 description = "A beautiful console-based network monitoring tool with ASCII graphs"
 authors = [
     {name = "PC0staS", email = "your-email@example.com"}
