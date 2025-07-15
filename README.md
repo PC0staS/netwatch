@@ -24,7 +24,7 @@ A beautiful console-based network monitoring tool with real-time ASCII graphs an
 pip install -e .
 ```
 
-### Method 2: Install from PyPI (Future)
+### Method 2: Install from PyPI
 
 ```bash
 pip install netwatch-monitor
