@@ -17,7 +17,7 @@ def read_requirements():
 
 setup(
     name="netwatch-monitor",
-    version="1.0.0",
+    version="1.0.1", # Increment this version for each release
     author="PC0staS",
     author_email="pablocostasnieto@gmail.com",  
     description="A beautiful console-based network monitoring tool with ASCII graphs",

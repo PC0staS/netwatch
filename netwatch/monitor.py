@@ -301,9 +301,10 @@ class NetworkMonitor:
         print(f"\n{Colors.BOLD}{Colors.CYAN}🚀 Starting network monitoring...{Colors.RESET}")
         print(f"{Colors.BOLD}{Colors.YELLOW}📊 Gathering interface data...{Colors.RESET}")
         
-        # Let user select interfaces
-        if not self.select_interfaces():
-            return
+        # Let user select interfaces only if not already selected
+        if not hasattr(self, 'selected_interfaces') or not self.selected_interfaces:
+            if not self.select_interfaces():
+                return
         
         print(f"\n{Colors.BOLD}{Colors.GREEN}🔄 Monitoring started for {len(self.selected_interfaces)} interface(s){Colors.RESET}")
         print(f"{Colors.BOLD}{Colors.BLUE}⏱️  Updates every second - Press Ctrl+C to stop{Colors.RESET}")
