@@ -198,7 +198,34 @@ class WebInterface:
         log = logging.getLogger('werkzeug')
         log.setLevel(logging.ERROR)
         
-        self.socketio.run(self.app, host=host, port=port, debug=debug, use_reloader=False)
+        # Configuración especial para Linux/systemd para evitar error de Werkzeug
+        import sys
+        import os
+        
+        # Detectar si estamos en un entorno tipo producción (Linux con host 0.0.0.0)
+        is_production_like = (
+            sys.platform.startswith('linux') and 
+            host == '0.0.0.0'
+        )
+        
+        if is_production_like:
+            # Para Linux en modo red, usar configuración que evite el error de Werkzeug
+            os.environ['WERKZEUG_RUN_MAIN'] = 'true'
+            debug = False
+        
+        # Ejecutar con allow_unsafe_werkzeug para versiones nuevas de Werkzeug
+        try:
+            self.socketio.run(
+                self.app, 
+                host=host, 
+                port=port, 
+                debug=debug, 
+                use_reloader=False,
+                allow_unsafe_werkzeug=True
+            )
+        except TypeError:
+            # Fallback para versiones más antiguas de socketio que no soportan allow_unsafe_werkzeug
+            self.socketio.run(self.app, host=host, port=port, debug=debug, use_reloader=False)
 
 if __name__ == '__main__':
     import sys

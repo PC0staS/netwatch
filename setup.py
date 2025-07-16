@@ -21,7 +21,7 @@ def read_requirements():
 
 setup(
     name="netwatch-monitor",
-    version="1.1.0", # New version with professional UI
+    version="1.1.1", # Fixed Linux systemd compatibility
     author="PC0staS",
     author_email="pablocostasnieto@gmail.com",  
     description="Monitor de red profesional con interfaz web moderna y paleta pastel",
