@@ -21,7 +21,7 @@ def read_requirements():
 
 setup(
     name="netwatch-monitor",
-    version="1.1.1", # Fixed Linux systemd compatibility
+    version="1.1.2", # Hotfix for Linux systemd environment variables
     author="PC0staS",
     author_email="pablocostasnieto@gmail.com",  
     description="Monitor de red profesional con interfaz web moderna y paleta pastel",

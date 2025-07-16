@@ -198,7 +198,7 @@ class WebInterface:
         log = logging.getLogger('werkzeug')
         log.setLevel(logging.ERROR)
         
-        # Configuración especial para Linux/systemd para evitar error de Werkzeug
+        # Configuración especial para Linux/systemd
         import sys
         import os
         
@@ -209,12 +209,16 @@ class WebInterface:
         )
         
         if is_production_like:
-            # Para Linux en modo red, usar configuración que evite el error de Werkzeug
-            os.environ['WERKZEUG_RUN_MAIN'] = 'true'
+            # Limpiar variables de entorno problemáticas
+            env_vars_to_clean = ['WERKZEUG_RUN_MAIN', 'WERKZEUG_SERVER_FD', 'FLASK_RUN_FROM_CLI']
+            for var in env_vars_to_clean:
+                if var in os.environ:
+                    del os.environ[var]
             debug = False
         
-        # Ejecutar con allow_unsafe_werkzeug para versiones nuevas de Werkzeug
+        # Probar diferentes métodos de ejecución
         try:
+            # Método 1: SocketIO con allow_unsafe_werkzeug
             self.socketio.run(
                 self.app, 
                 host=host, 
@@ -223,9 +227,19 @@ class WebInterface:
                 use_reloader=False,
                 allow_unsafe_werkzeug=True
             )
-        except TypeError:
-            # Fallback para versiones más antiguas de socketio que no soportan allow_unsafe_werkzeug
-            self.socketio.run(self.app, host=host, port=port, debug=debug, use_reloader=False)
+        except (TypeError, KeyError) as e:
+            print(f"🔄 Intentando método alternativo... ({str(e)})")
+            try:
+                # Método 2: SocketIO sin allow_unsafe_werkzeug
+                self.socketio.run(self.app, host=host, port=port, debug=debug, use_reloader=False)
+            except Exception as e2:
+                print(f"🔄 Intentando método Flask puro... ({str(e2)})")
+                try:
+                    # Método 3: Flask directo (sin SocketIO)
+                    self.app.run(host=host, port=port, debug=debug, use_reloader=False, threaded=True)
+                except Exception as e3:
+                    print(f"❌ Error al iniciar servidor: {str(e3)}")
+                    raise
 
 if __name__ == '__main__':
     import sys
