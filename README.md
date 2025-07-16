@@ -1,36 +1,54 @@
-# NetWatch - Network Monitor 🌐
+# NetWatch - Professional Network Monitor 🌐
 
-A beautiful console-based network monitoring tool with real-time ASCII graphs and colorful interface.
+An elegant network monitoring tool with modern console and web interfaces, designed with a professional pastel color palette.
 
 ## ✨ Features
 
-- 🎯 **Interface Selection**: Choose specific network interfaces to monitor or monitor all
+### 🖥️ Console Interface
+- 🎯 **Interface Selection**: Choose specific interfaces or monitor all
 - 📊 **Real-time Traffic**: Live monitoring of sent/received bytes per second
-- 📈 **Cumulative Stats**: Total bytes sent and received since monitoring started
-- 🎨 **Beautiful ASCII Graphs**: Colorful real-time traffic history graphs
+- 📈 **Cumulative Statistics**: Total bytes sent and received
+- 🎨 **ASCII Graphs**: Colorful real-time traffic history graphs
 - 🌈 **Colorful Interface**: Rich terminal colors with emojis and visual elements
-- 🔄 **Cross-platform**: Works on Windows, Linux, and macOS
-- ⚡ **Easy Installation**: Simple pip install from anywhere
+
+### 🌐 Web Interface
+- 🎨 **Professional Pastel Palette**: Modern design with soft and elegant colors
+- 📱 **Responsive**: Perfectly adapted for mobile and desktop
+- 📊 **Interactive Charts**: Advanced visualization with Chart.js
+- 🔄 **Real-time Data**: Automatic updates without simulations
+- 🚫 **No Fake Data**: Shows disconnected state when no real data is available
+- 🎯 **REST API**: Endpoints for integration with other systems
+
+### 🔧 Technical Features
+- 🔄 **Cross-platform**: Works on Windows, Linux and macOS
+- ⚡ **Easy Installation**: Simple pip installation
+- 🐍 **Python 3.7+**: Support for modern Python versions
+- 📦 **Professional Packaging**: Ready for distribution
 
 ## 🚀 Installation
 
-### Method 1: Install from Source (Recommended)
-
-1. Clone or download the project
-2. Navigate to the project directory
-3. Install in development mode:
-
-```bash
-pip install -e .
-```
-
-### Method 2: Install from PyPI
+### Method 1: Install from PyPI (Recommended)
 
 ```bash
 pip install netwatch-monitor
 ```
 
+### Method 2: Install from Source
+
+1. Clone the repository:
+```bash
+git clone https://github.com/PC0staS/netwatch.git
+cd netwatch
+```
+
+2. Install in development mode:
+```bash
+pip install -e .
+```
+
 ## 🎮 Usage
+
+### 🖥️ Console Interface
 
 After installation, simply run:
 
@@ -43,9 +61,47 @@ The tool will:
 2. Let you select which interfaces to monitor:
    - `0` - Monitor ALL interfaces
    - `1,2,3` - Monitor specific interfaces (comma-separated)
-3. Start real-time monitoring with beautiful ASCII graphs
+3. Start real-time monitoring with ASCII graphs
 
-### Example Usage
+### 🌐 Web Interface
+
+To start the web interface:
+
+```bash
+netwatch-web
+```
+
+For network access (accessible from other devices on your local network):
+
+```bash
+netwatch-web --network
+```
+
+Or with custom options:
+
+```bash
+netwatch-web --host 0.0.0.0 --port 8080 --debug
+```
+
+**Alternative method using main command:**
+
+```bash
+netwatch --web --network --port 8080
+```
+
+Then open your browser at `http://localhost:5000` (or the port you specify).
+
+**For network access:** Use your computer's IP address from other devices, e.g., `http://192.168.1.100:5000`
+
+#### Web Interface Features:
+- 🎨 **Professional Pastel Palette**: Soft and elegant colors
+- 📱 **Responsive Design**: Works perfectly on mobile devices
+- 📊 **Interactive Charts**: Advanced data visualization
+- 🔄 **Real-time Updates**: Automatic refresh every 2 seconds
+- 🚫 **No Simulated Data**: Shows disconnected state when no data available
+- 🎯 **Intuitive Controls**: Easy interface selection and monitoring control
+
+### Example Usage - Console
 
 ```bash
 $ netwatch
@@ -91,22 +147,25 @@ For each selected interface, you'll see:
 ## 🎨 Features Details
 
 ### ASCII Graphs
-- **Width**: 65 characters
-- **Height**: 6 rows
+- **Width**: 65 characters wide
+- **Height**: 6 rows of data
 - **Colors**: Different color schemes for sent (blue) and received (green) traffic
 - **Intensity**: Multiple intensity levels based on traffic volume
 - **Scale**: Automatic scaling with max value display
 
-### Interface Selection
-- **Smart Selection**: Easy number-based selection
-- **Multiple Interfaces**: Monitor several interfaces simultaneously
-- **All Interfaces**: Quick option to monitor everything
-- **Validation**: Input validation with helpful error messages
+### Web Interface Color Palette
+- **Primary**: Soft purple (#8B7EC8)
+- **Secondary**: Mint green (#A8D5BA)
+- **Accent**: Soft pink (#FFB6C1)
+- **Success**: Aqua mint (#98E4D6)
+- **Warning**: Soft yellow (#F4D03F)
+- **Danger**: Soft coral (#F1948A)
 
 ## 🛠️ Requirements
 
-- Python 3.6+
+- Python 3.7+
 - psutil (automatically installed)
+- Flask & Flask-SocketIO (for web interface)
 - Works on Windows, Linux, and macOS
 - Terminal with ANSI color support (most modern terminals)
 
@@ -118,7 +177,10 @@ netwatch/
 ├── netwatch/
 │   ├── __init__.py
 │   ├── monitor.py      # Core monitoring logic
-│   └── cli.py          # Command line interface
+│   ├── cli.py          # Command line interface
+│   ├── web.py          # Web interface
+│   ├── static/         # CSS, JS, and assets
+│   └── templates/      # HTML templates
 ├── setup.py            # Package setup
 ├── pyproject.toml      # Modern Python packaging
 ├── requirements.txt    # Dependencies
@@ -128,14 +190,17 @@ netwatch/
 ### Building from Source
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/PC0staS/netwatch.git
 cd netwatch
 
 # Install in development mode
 pip install -e .
 
-# Run the tool
+# Run the console version
 netwatch
+
+# Run the web version
+netwatch-web
 ```
 
 ## 🎯 Use Cases
@@ -145,6 +210,7 @@ netwatch
 - **Development**: Monitor network activity during application development
 - **System Administration**: Quick network interface overview
 - **Educational**: Learn about network interfaces and traffic patterns
+- **Remote Monitoring**: Use web interface for remote network monitoring
 
 ## 🚀 Cross-Platform Support
 
@@ -152,22 +218,48 @@ netwatch
 - Full support with PowerShell and Command Prompt
 - Colorful interface with emoji support
 - All network interfaces detected
+- Web interface works with all browsers
 
 ### Linux
 - Native terminal support
 - Works with all major distributions
 - Systemd service compatible
+- Web interface accessible remotely
 
 ### macOS
 - Terminal.app and iTerm2 support
 - Full color and emoji support
 - Works with all network interfaces
+- Safari and Chrome compatible
 
 ## 📝 Commands
 
-- **Start**: `netwatch`
+### Console Commands
+- **Start Console**: `netwatch`
 - **Stop**: `Ctrl+C`
 - **Interface Selection**: Follow on-screen prompts
+
+### Web Commands
+- **Start Web Interface (localhost only)**: `netwatch-web`
+- **Start Web Interface (network access)**: `netwatch-web --network`
+- **Custom Host/Port**: `netwatch-web --host 0.0.0.0 --port 8080`
+- **Network + Custom Port**: `netwatch-web --network --port 8080`
+- **Debug Mode**: `netwatch-web --debug`
+- **Help**: `netwatch-web --help`
+
+### Network Access
+- **Localhost only**: `netwatch-web` (default)
+- **Network access**: `netwatch-web --network` or `netwatch-web --host 0.0.0.0`
+- **Access from other devices**: Use your computer's IP address (e.g., `http://192.168.1.100:5000`)
+
+## 🌐 API Endpoints
+
+The web interface provides REST API endpoints:
+
+- `GET /api/interfaces` - List available network interfaces
+- `GET /api/stats` - Get current network statistics
+- `POST /api/start_monitoring` - Start monitoring selected interfaces
+- `POST /api/stop_monitoring` - Stop monitoring
 
 ## 🎉 Examples
 
@@ -189,6 +281,11 @@ netwatch
 # Select: 1
 ```
 
+### Start Web Interface on Custom Port
+```bash
+netwatch-web --port 8080
+```
+
 ## 🐛 Troubleshooting
 
 ### Common Issues
@@ -196,12 +293,14 @@ netwatch
 1. **No interfaces shown**: Make sure you have network interfaces configured
 2. **Colors not working**: Ensure your terminal supports ANSI colors
 3. **Permission errors**: Some systems may require elevated privileges for network monitoring
-4. **Import errors**: Make sure psutil is installed: `pip install psutil`
+4. **Import errors**: Make sure all dependencies are installed: `pip install -r requirements.txt`
+5. **Web interface not accessible**: Check if port is available and firewall settings
 
 ### Requirements
-- Minimum Python 3.6
-- psutil library
+- Minimum Python 3.7
+- psutil, Flask, Flask-SocketIO libraries
 - Terminal with ANSI color support
+- Modern web browser for web interface
 
 ## 📄 License
 
@@ -215,11 +314,12 @@ Contributions are welcome! Please feel free to submit pull requests or report is
 
 - [ ] Export data to CSV/JSON
 - [ ] Historical data storage
-- [ ] Web interface
 - [ ] Network alerts/notifications
 - [ ] Bandwidth usage graphs
 - [ ] Custom refresh intervals
 - [ ] Multiple monitoring modes
+- [ ] User authentication for web interface
+- [ ] Dark/Light theme toggle
 
 ---
 

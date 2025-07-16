@@ -13,14 +13,18 @@ def read_readme():
 
 # Read the requirements
 def read_requirements():
-    return ["psutil>=5.7.0"]
+    return [
+        "psutil>=5.7.0",
+        "flask>=2.3.0",
+        "flask-socketio>=5.3.0"
+    ]
 
 setup(
     name="netwatch-monitor",
-    version="1.0.1", # Increment this version for each release
+    version="1.1.0", # New version with professional UI
     author="PC0staS",
     author_email="pablocostasnieto@gmail.com",  
-    description="A beautiful console-based network monitoring tool with ASCII graphs",
+    description="Monitor de red profesional con interfaz web moderna y paleta pastel",
     long_description=read_readme(),
     long_description_content_type="text/markdown",
     url="https://github.com/PC0staS/netwatch",  
@@ -32,7 +36,6 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
@@ -43,12 +46,13 @@ setup(
         "Topic :: System :: Networking :: Monitoring",
         "Topic :: Utilities",
     ],
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     install_requires=read_requirements(),
     entry_points={
         "console_scripts": [
             "netwatch=netwatch.cli:main",
             "netwatch-monitor=netwatch.cli:main",
+            "netwatch-web=netwatch.cli:web_main",
         ],
     },
     keywords="network monitoring, bandwidth monitor, console, ascii graphs, system monitoring",
